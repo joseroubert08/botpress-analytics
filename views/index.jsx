@@ -68,10 +68,7 @@ export default class AnalyticsModule extends React.Component {
              <CartesianGrid strokeDasharray="3 3"/>
              <Tooltip/>
              <Legend />
-             <Line type="monotone" dataKey="facebook" stroke="#8884d8" activeDot={{r: 8}}/>
-             <Line type="monotone" dataKey="slack" stroke="#de5454" />
-             <Line type="monotone" dataKey="kik" stroke="#ffc658" />
-
+             <Line type="monotone" dataKey="total" stroke="#8884d8" activeDot={{r: 8}}/>
             </LineChart>
           </ResponsiveContainer>
         );

@@ -25,55 +25,10 @@ class Analytics extends EventEmitter {
     setInterval(() => {
       stats.getTotalUsers(this.dbFile)
       .then(data => this.savePartialData('totalUsers', data))
-    }, 10000)
+      .then(() => stats.getDailyActiveUsers(this.dbFile))
+      .then(data => this.savePartialData('activeUsers', data))
+    }, 1000)
     // }, 30 * 1000 * 60) // every 30min
-
-    this.totalUsersData = [
-      //Last 10 important moments + total of users
-      {name: 'Dec', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Jan', facebook: 600, slack: 2400, kik: 2400},
-      {name: 'Feb', facebook: 800, slack: 2400, kik: 2400},
-      {name: 'Apr', facebook: 1000, slack: 2400, kik: 2400},
-      {name: 'May', facebook: 2000, slack: 2400, kik: 2400},
-      {name: 'Jun', facebook: 3000, slack: 1398, kik: 2210},
-      {name: 'Jul', facebook: 5000, slack: 9800, kik: 2290},
-      {name: 'Aug', facebook: 7000, slack: 3908, kik: 2000},
-      {name: 'Sept', facebook: 7000, slack: 4800, kik: 2181},
-      {name: 'Oct', facebook: 10000, slack: 3800, kik: 2500},
-      {name: 'Nov', facebook: 14000, slack: 4300, kik: 2100},
-    ]
-
-    this.fictiveActiveUsersData = [
-      //Last 30 days + active users
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Jan', facebook: 600, slack: 2400, kik: 2400},
-      {name: 'Feb', facebook: 800, slack: 2400, kik: 2400},
-      {name: 'Apr', facebook: 1000, slack: 2400, kik: 2400},
-      {name: 'May', facebook: 2000, slack: 2400, kik: 2400},
-      {name: 'Jun', facebook: 3000, slack: 1398, kik: 2210},
-      {name: 'Jul', facebook: 5000, slack: 9800, kik: 2290},
-      {name: 'Aug', facebook: 7000, slack: 3908, kik: 2000},
-      {name: 'Sept', facebook: 7000, slack: 4800, kik: 2181},
-      {name: 'Oct', facebook: 10000, slack: 3800, kik: 2500},
-      {name: 'Nov', facebook: 14000, slack: 4300, kik: 2100},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400},
-      {name: 'Date', facebook: 400, slack: 2400, kik: 2400}
-    ]
 
     this.fictiveGenderUsageData = [
       //Last 7 days + active users
@@ -114,12 +69,16 @@ class Analytics extends EventEmitter {
     fs.writeFileSync(this.chartsDatafile, JSON.stringify(chartsData))
   }
 
+  beta() {
+    stats.getDailyActiveUsers(this.dbFile)
+  }
+
   getChartsGraphData() {
     const chartsData = loadDataFromFile(this.chartsDatafile)
 
     return {
       totalUsersChartData: chartsData.totalUsers,
-      activeUsersChartData: this.fictiveActiveUsersData,
+      activeUsersChartData: chartsData.activeUsers,
       genderUsageChartData: this.fictiveGenderUsageData,
       typicalConversationLengthInADay: this.fictiveConversationData,
       specificMetricsForLastDays: this.fictiveSpecificMetrics

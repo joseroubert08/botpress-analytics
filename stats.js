@@ -3,6 +3,7 @@
 const db = require('./db')
 const moment = require('moment')
 const Promise = require('bluebird')
+const _ = require('lodash')
 
 const oneDayMs = 1000 * 60 * 60 * 24
 
@@ -55,6 +56,35 @@ function getTotalUsers(dbFile) {
   })
 }
 
+function getDailyActiveUsers(dbFile) {
+  const nbOfDays = 14
+
+  let ranges = _.times(nbOfDays, Number)
+  ranges = ranges.map((n) => {
+    var date = moment(new Date()).subtract(n, 'days')
+    return {
+      date: date.format('MMM Do'),
+      start: date.startOf('day').format('x'), 
+      end: date.endOf('day').format('x')
+    }
+  })
+
+  return db.getOrCreate(dbFile)
+  .then((knex) => {
+    return Promise.mapSeries(ranges, (range) => {
+      return knex.select(knex.raw('count(*) as count')).from(function() {
+        return this.from('interactions')
+        .where('ts', '<', range.end)
+        .andWhere('ts', '>', range.start)
+        .andWhere('direction', '=', 'in')
+        .groupBy('user')
+        .select('platform')
+      })
+      .then().get(0).then(result => ({ name: range.date, total: result.count }))
+    })
+  })
+}
+
 function generate(dbFile) {
   getTotalUsers(dbFile)
   .then((result) => {
@@ -63,5 +93,6 @@ function generate(dbFile) {
 }
 
 module.exports = {
-  getTotalUsers: getTotalUsers
+  getTotalUsers: getTotalUsers,
+  getDailyActiveUsers: getDailyActiveUsers
 }

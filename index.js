@@ -1,4 +1,5 @@
 const Analytics = require('./analytics')
+let analytics = null
 
 module.exports = {
   incoming: function(event, next) {
@@ -12,12 +13,12 @@ module.exports = {
   },
 
   init: function(skin) {
-    
+    analytics = new Analytics(skin)
+    analytics.beta()
   },
 
   ready: function(skin) {
-    analytics = new Analytics(skin);
-
+    
     skin.getRouter("skin-analytics")
     .get("/graphs", (req, res, next) => {
       res.send(analytics.getChartsGraphData())
