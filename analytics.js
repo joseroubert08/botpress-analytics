@@ -1,16 +1,34 @@
+const fs = require('fs')
+const path = require('path')
 const EventEmitter = require('eventemitter2');
+
+const stats = require('./stats')
+
+const loadDataFromFile = (file) => {
+  if(!fs.existsSync(file)){
+    console.log("Analytics file (" + file + ") doesn\'t exist.")
+  }
+  return JSON.parse(fs.readFileSync(file, "utf-8"))
+}
 
 class Analytics extends EventEmitter {
   constructor(skin) {
-    super();
+    super()
 
     if (!skin){
       throw new Error('You need to specify skin');
     }
 
-    this.app = skin.getRouter('skin-analytics');
+    this.chartsDatafile = path.join(skin.projectLocation, skin.botfile.dataDir, 'skin-analytics.charts.json')    
+    this.dbFile = path.join(skin.projectLocation, skin.botfile.dataDir, 'skin-analytics.sqlite')
 
-    this.fictiveDataForTotalUsers = [
+    setInterval(() => {
+      stats.getTotalUsers(this.dbFile)
+      .then(data => this.savePartialData('totalUsers', data))
+    }, 10000)
+    // }, 30 * 1000 * 60) // every 30min
+
+    this.totalUsersData = [
       //Last 10 important moments + total of users
       {name: 'Dec', facebook: 400, slack: 2400, kik: 2400},
       {name: 'Jan', facebook: 600, slack: 2400, kik: 2400},
@@ -83,20 +101,29 @@ class Analytics extends EventEmitter {
       numberOfInteractionInAverage: 12.4,
       numberOfUsersYesterday: 5234,
       numberOfNewUsersInLast7days: 981
-
     }
+  }
 
-    this.chartsGraphData = {
-      totalUsersChartData: this.fictiveDataForTotalUsers,
+  getData() {
+    return loadDataFromFile(this.chartsDatafile)
+  }
+
+  savePartialData(property, data) {
+    const chartsData = loadDataFromFile(this.chartsDatafile)
+    chartsData[property] = data
+    fs.writeFileSync(this.chartsDatafile, JSON.stringify(chartsData))
+  }
+
+  getChartsGraphData() {
+    const chartsData = loadDataFromFile(this.chartsDatafile)
+
+    return {
+      totalUsersChartData: chartsData.totalUsers,
       activeUsersChartData: this.fictiveActiveUsersData,
       genderUsageChartData: this.fictiveGenderUsageData,
       typicalConversationLengthInADay: this.fictiveConversationData,
       specificMetricsForLastDays: this.fictiveSpecificMetrics
     }
-  }
-
-  getChartsGraphData(){
-    return this.chartsGraphData
   }
 }
 
