@@ -20,16 +20,19 @@ module.exports = {
     db.saveIncoming(event)
     next()
   },
+
   outgoing: function(event, next) {
     db.saveOutgoing(event)
     next()
   },
+
   init: function(skin) {
     const dbFile = path.join(skin.projectLocation, skin.botfile.dataDir, 'skin-analytics.sqlite')
     console.log(dbFile)
     var knex = db.getOrCreate(dbFile)
     console.log(knex)
   },
+
   ready: function(skin) {
     const rawDatafile = path.join(skin.projectLocation, skin.botfile.dataDir, 'skin-analytics.raw.json')
     const chartsDatafile = path.join(skin.projectLocation, skin.botfile.dataDir, 'skin-analytics.charts.json')
@@ -41,7 +44,7 @@ module.exports = {
 
     skin.getRouter("skin-analytics")
     .get("/graphs", (req, res, next) => {
-      res.send(analytics.getGraphsData())
+      res.send(analytics.getChartsGraphData())
     })
 
   }
