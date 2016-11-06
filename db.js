@@ -42,6 +42,7 @@ function initializeDb() {
       table.enu('direction', ['in', 'out'])
     })
   })
+  .then(() => knex)
 }
 
 function saveFacebookIn(event) {
