@@ -2,6 +2,7 @@ const Analytics = require('./analytics')
 const fs = require('fs')
 const path = require('path')
 
+const db = require('./db')
 
 const loadDataFromFile = (file) => {
   if(!fs.existsSync(file)){
@@ -15,14 +16,19 @@ const saveDataToFile = (data, file) => {
 }
 
 module.exports = {
-  ingoing: function(event, next) {
-
+  incoming: function(event, next) {
+    db.saveIncoming(event)
+    next()
   },
   outgoing: function(event, next) {
-
+    db.saveOutgoing(event)
+    next()
   },
   init: function(skin) {
-
+    const dbFile = path.join(skin.projectLocation, skin.botfile.dataDir, 'skin-analytics.sqlite')
+    console.log(dbFile)
+    var knex = db.getOrCreate(dbFile)
+    console.log(knex)
   },
   ready: function(skin) {
     const rawDatafile = path.join(skin.projectLocation, skin.botfile.dataDir, 'skin-analytics.raw.json')
