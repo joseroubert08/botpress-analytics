@@ -177,9 +177,73 @@ function getInteractionRanges(dbFile) {
   })
 }
 
+function getAverageInteractions(dbFile) {
+  // Average incoming interactions per user per day for the last 7 days
+  const now = new Date()
+  const daysAgo = moment(new Date()).subtract(7, 'days').format('x')
+
+  return db.getOrCreate(dbFile)
+  .then((knex) => {
+    return knex.select(knex.raw('avg(c) as count')).from(function() {
+      return this.from('interactions')
+      .where('ts', '<', now)
+      .andWhere('ts', '>', daysAgo)
+      .andWhere('direction', '=', 'in')
+      .groupBy(knex.raw("user, strftime('%d/%m/%Y', ts/1000, 'unixepoch')"))
+      .select(knex.raw('count(*) as c'))
+    })
+    .then().get(0).then(result => result.count)
+  })
+}
+
+function getNumberOfUsers(dbFile) {
+  // Get total number of active users for today, yesterday, this week
+
+  const ranges = [
+    { label: 'today', start: moment(new Date()).startOf('day').format('x'), end: new Date() },
+    { 
+      label: 'yesterday',
+      start: moment(new Date()).subtract(1, 'days').startOf('day').format('x'),
+      end: moment(new Date()).subtract(1, 'days').endOf('day').format('x')
+    },
+    { 
+      label: 'week',
+      start: moment(new Date()).startOf('week').format('x'),
+      end: moment(new Date()).endOf('week').format('x')
+    }
+  ]
+
+  return db.getOrCreate(dbFile)
+  .then((knex) => {
+    return Promise.mapSeries(ranges, (range) => {
+      return knex.select(knex.raw('count(*) as count')).from(function() {
+        return this.from('interactions')
+        .where('ts', '<', range.end)
+        .andWhere('ts', '>', range.start)
+        .andWhere('direction', '=', 'in')
+        .groupBy('user')
+        .select(knex.raw(1))
+      })
+      .then().get(0)
+      .then(result => ({ label: range.label, count: result.count }))
+    })
+  })
+  .then(results => {
+    return results.reduce((acc, curr) => {
+      acc[curr.label] = curr.count
+      return acc
+    }, {})
+  })
+}
+
+// select count(c) from 
+// (select 1 as c from interactions group by user)
+
 module.exports = {
   getTotalUsers: getTotalUsers,
   getDailyActiveUsers: getDailyActiveUsers,
   getDailyGender: getDailyGender,
-  getInteractionRanges: getInteractionRanges
+  getInteractionRanges: getInteractionRanges,
+  getAverageInteractions: getAverageInteractions,
+  getNumberOfUsers: getNumberOfUsers
 }
