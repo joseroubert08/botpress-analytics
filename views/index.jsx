@@ -203,6 +203,7 @@ export default class AnalyticsModule extends React.Component {
           <th>Date</th>
           <td>Users</td>
           {this.renderDays()}
+          <td>Overall</td>
         </tr>
       </thead>
     )

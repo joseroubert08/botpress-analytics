@@ -83,7 +83,7 @@ class Analytics extends EventEmitter {
       genderUsageChartData: chartsData.genderUsage,
       typicalConversationLengthInADay: chartsData.interactionsRange,
       specificMetricsForLastDays: chartsData.fictiveSpecificMetrics,
-      retentionHeatMap: chartsData.fictiveRetentionHeatMap,
+      retentionHeatMap: chartsData.retentionHeatMap,
       busyHoursHeatMap: this.fictiveBusyHour
     }
   }
