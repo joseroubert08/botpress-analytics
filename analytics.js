@@ -31,13 +31,41 @@ class Analytics extends EventEmitter {
       .then(data => this.savePartialData('genderUsage', data))
       .then(() => stats.getInteractionRanges(this.dbFile))
       .then(data => this.savePartialData('interactionsRange', data))
+      .then(() => stats.getAverageInteractions(this.dbFile))
+      .then(averageInteractions => {
+        stats.getNumberOfUsers(this.dbFile)
+        .then(nbUsers => {
+          this.savePartialData('fictiveSpecificMetrics', {
+            numberOfInteractionInAverage: averageInteractions,
+            numberOfUsersToday: nbUsers.today,
+            numberOfUsersYesterday: nbUsers.yesterday,
+            numberOfUsersThisWeek: nbUsers.week
+          })
+        })
+      })
     }, 1000)
     // }, 30 * 1000 * 60) // every 30min
 
-    this.fictiveSpecificMetrics = {
-      numberOfInteractionInAverage: 12.4,
-      numberOfUsersYesterday: 5234,
-      numberOfNewUsersInLast7days: 981
+    this.fictiveBusyHour = {
+      'Oct 31': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
+      'Oct 30': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
+      'Oct 29': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
+      'Oct 28': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
+      'Oct 27': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
+      'Oct 26': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
+      'Oct 25': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
+      'Oct 24': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
+    }
+
+    this.fictiveRetentionHeatMap = {
+      'Oct 31': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1],
+      'Oct 30': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1],
+      'Oct 29': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1],
+      'Oct 28': [1.0, 0.9, 0.8, 0.7, 0.4, 0.9, 0.1],
+      'Oct 27': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1],
+      'Oct 26': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1],
+      'Oct 25': [1.0, 0.9, 0.8, 0.7, 0.4, 0.9, 1.0],
+      'Oct 24': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1]
     }
   }
 
@@ -52,7 +80,7 @@ class Analytics extends EventEmitter {
   }
 
   beta() {
-    stats.getInteractionRanges(this.dbFile)
+    stats.getNumberOfUsers(this.dbFile)
   }
 
   getChartsGraphData() {
@@ -63,7 +91,9 @@ class Analytics extends EventEmitter {
       activeUsersChartData: chartsData.activeUsers,
       genderUsageChartData: chartsData.genderUsage,
       typicalConversationLengthInADay: chartsData.interactionsRange,
-      specificMetricsForLastDays: this.fictiveSpecificMetrics
+      specificMetricsForLastDays: chartsData.fictiveSpecificMetrics,
+      retentionHeatMap: this.fictiveRetentionHeatMap,
+      busyHoursHeatMap: this.fictiveBusyHour
     }
   }
 }
