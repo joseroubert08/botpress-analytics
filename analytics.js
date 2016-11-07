@@ -43,7 +43,9 @@ class Analytics extends EventEmitter {
           })
         })
       })
-    }, 1000)
+      .then(() => stats.usersRetention(this.dbFile))
+      .then(data => this.savePartialData('retentionHeatMap', data))
+    }, 5000)
     // }, 30 * 1000 * 60) // every 30min
 
     this.fictiveBusyHour = {
@@ -80,7 +82,7 @@ class Analytics extends EventEmitter {
   }
 
   beta() {
-    stats.getNumberOfUsers(this.dbFile)
+    stats.usersRetention(this.dbFile)
   }
 
   getChartsGraphData() {
@@ -92,7 +94,7 @@ class Analytics extends EventEmitter {
       genderUsageChartData: chartsData.genderUsage,
       typicalConversationLengthInADay: chartsData.interactionsRange,
       specificMetricsForLastDays: chartsData.fictiveSpecificMetrics,
-      retentionHeatMap: this.fictiveRetentionHeatMap,
+      retentionHeatMap: chartsData.fictiveRetentionHeatMap,
       busyHoursHeatMap: this.fictiveBusyHour
     }
   }

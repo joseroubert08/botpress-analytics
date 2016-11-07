@@ -236,8 +236,65 @@ function getNumberOfUsers(dbFile) {
   })
 }
 
-// select count(c) from 
-// (select 1 as c from interactions group by user)
+function usersRetention(dbFile) {
+  // Get the last 7 days cohort of users along with the retention rate
+
+  let cohorts = _.times(8, n => Number(8 - n))
+  cohorts = cohorts.map(n => {
+    const day = moment(new Date()).subtract(n, 'days')
+    return {
+      start: day.startOf('day').format('x'),
+      end: day.endOf('day').format('x'),
+      name: day.format('MMM Do'),
+      date: day
+    }
+  })
+
+  const result = {}
+
+  return db.getOrCreate(dbFile)
+  .then((knex) => {
+    return Promise.mapSeries(cohorts, (coo) => {
+      return knex.raw(`
+        select count(*) total, ts date from
+        (select user, ts from interactions
+        join users on interactions.user = users.id
+        where interactions.direction = 'in'
+        and users.created_on > ?
+        and users.created_on < ?
+        group by user, date(ts/1000, 'unixepoch'))
+        group by date(ts/1000, 'unixepoch')
+        order by ts`, [ coo.start, coo.end ])
+      .then(results => {
+        return knex('users')
+        .whereBetween('created_on', [ coo.start, coo.end ])
+        .select(knex.raw('count(*) as total'))
+        .then().get(0).then(({ total }) => {
+          const row = []
+          for(var i = 1; i <= 7; i++) {
+            const anchor = moment(coo.date).add(i, 'days').startOf('day').format('l')
+            const f = _.find(results, ({ date }) => {
+              const d = moment(date).startOf('day').format('l')
+              return anchor == d
+            })
+            if (f) {
+              row.push(Number((f.total / total).toFixed(2)))
+            } else {
+              row.push(null)
+            }
+          }
+          const mean = _.mean(_.filter(row, v => v !== null))
+          row.unshift(total)
+          row.push(_.isNaN(mean) ? 0 : mean)
+          result[coo.name] = row
+        })
+      })
+    })
+  })
+  .then(() => result)
+}
+
+
 
 module.exports = {
   getTotalUsers: getTotalUsers,
@@ -245,5 +302,6 @@ module.exports = {
   getDailyGender: getDailyGender,
   getInteractionRanges: getInteractionRanges,
   getAverageInteractions: getAverageInteractions,
-  getNumberOfUsers: getNumberOfUsers
+  getNumberOfUsers: getNumberOfUsers,
+  usersRetention: usersRetention
 }
