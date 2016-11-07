@@ -85,6 +85,8 @@ export default class AnalyticsModule extends React.Component {
 
   renderActiveUsersSimpleLineChart() {
     const data = this.state.activeUsersChartData
+    const sortedByKeys = _.sortBy(data, o => _.keys(o).length)
+    const legend = sortedByKeys[sortedByKeys.length - 1]
 
     const SimpleLineChart = React.createClass({
     	render () {
@@ -97,7 +99,7 @@ export default class AnalyticsModule extends React.Component {
              <CartesianGrid strokeDasharray="3 3"/>
              <Tooltip/>
              <Legend />
-             {_.values(renderLine(data[0]))}
+             {_.values(renderLine(legend))}
             </LineChart>
           </ResponsiveContainer>
         );
