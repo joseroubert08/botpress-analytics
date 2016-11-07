@@ -27,30 +27,12 @@ class Analytics extends EventEmitter {
       .then(data => this.savePartialData('totalUsers', data))
       .then(() => stats.getDailyActiveUsers(this.dbFile))
       .then(data => this.savePartialData('activeUsers', data))
+      .then(() => stats.getDailyGender(this.dbFile))
+      .then(data => this.savePartialData('genderUsage', data))
+      .then(() => stats.getInteractionRanges(this.dbFile))
+      .then(data => this.savePartialData('interactionsRange', data))
     }, 1000)
     // }, 30 * 1000 * 60) // every 30min
-
-    this.fictiveGenderUsageData = [
-      //Last 7 days + active users
-      {name: 'Date', male: 400, female: 2400},
-      {name: 'Date', male: 2400, female: 700},
-      {name: 'Date', male: 400, female: 700},
-      {name: 'Date', male: 2400, female: 2400},
-      {name: 'Date', male: 700, female: 700},
-      {name: 'Date', male: 2400, female: 2400},
-      {name: 'Date', male: 400, female: 700},
-      {name: 'Date', male: 400, female: 2400}
-    ]
-
-    this.fictiveConversationData = [
-      {name: '[0-5]', percentage: 0.253},
-      {name: '[6-10]', percentage: 0.102},
-      {name: '[11-15]', percentage: 0.124},
-      {name: '[16-20]', percentage: 0.075},
-      {name: '[21-30]', percentage: 0.335},
-      {name: '[31-50]', percentage: 0.072},
-      {name: '[51-100]', percentage: 0.058}
-    ]
 
     this.fictiveSpecificMetrics = {
       numberOfInteractionInAverage: 12.4,
@@ -70,7 +52,7 @@ class Analytics extends EventEmitter {
   }
 
   beta() {
-    stats.getDailyActiveUsers(this.dbFile)
+    stats.getInteractionRanges(this.dbFile)
   }
 
   getChartsGraphData() {
@@ -79,8 +61,8 @@ class Analytics extends EventEmitter {
     return {
       totalUsersChartData: chartsData.totalUsers,
       activeUsersChartData: chartsData.activeUsers,
-      genderUsageChartData: this.fictiveGenderUsageData,
-      typicalConversationLengthInADay: this.fictiveConversationData,
+      genderUsageChartData: chartsData.genderUsage,
+      typicalConversationLengthInADay: chartsData.interactionsRange,
       specificMetricsForLastDays: this.fictiveSpecificMetrics
     }
   }

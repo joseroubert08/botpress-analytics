@@ -68,7 +68,9 @@ export default class AnalyticsModule extends React.Component {
              <CartesianGrid strokeDasharray="3 3"/>
              <Tooltip/>
              <Legend />
-             <Line type="monotone" dataKey="total" stroke="#8884d8" activeDot={{r: 8}}/>
+             <Line type="monotone" dataKey="facebook" stroke="#8884d8" activeDot={{r: 8}}/>
+             <Line type="monotone" dataKey="slack" stroke="#de5454" />
+             <Line type="monotone" dataKey="kik" stroke="#ffc658" />
             </LineChart>
           </ResponsiveContainer>
         );
@@ -141,10 +143,10 @@ export default class AnalyticsModule extends React.Component {
             <BarChart data={data}
               margin={{top: 5, right: 30, left: 20, bottom: 5}}>
               <XAxis dataKey="name"/>
-              <YAxis tickFormatter={toPercent}/>
+              <YAxis/>
               <CartesianGrid strokeDasharray="3 3"/>
               <Tooltip />
-              <Bar dataKey="percentage" fill="#8884d8" />
+              <Bar dataKey="count" fill="#8884d8" />
             </BarChart>
           </ResponsiveContainer>
         )

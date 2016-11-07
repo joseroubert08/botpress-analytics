@@ -56,11 +56,11 @@ function getTotalUsers(dbFile) {
   })
 }
 
-function getDailyActiveUsers(dbFile) {
+function getLastDaysRange() {
   const nbOfDays = 14
 
   let ranges = _.times(nbOfDays, Number)
-  ranges = ranges.map((n) => {
+  return ranges.map((n) => {
     var date = moment(new Date()).subtract(n, 'days')
     return {
       date: date.format('MMM Do'),
@@ -68,31 +68,118 @@ function getDailyActiveUsers(dbFile) {
       end: date.endOf('day').format('x')
     }
   })
+}
 
+function getDailyActiveUsers(dbFile) {
+  const ranges = getLastDaysRange()
   return db.getOrCreate(dbFile)
   .then((knex) => {
     return Promise.mapSeries(ranges, (range) => {
-      return knex.select(knex.raw('count(*) as count')).from(function() {
+      return knex.select(knex.raw('count(*) as count, platform')).from(function() {
         return this.from('interactions')
+        .join('users', 'users.id', 'interactions.user')
         .where('ts', '<', range.end)
         .andWhere('ts', '>', range.start)
         .andWhere('direction', '=', 'in')
         .groupBy('user')
-        .select('platform')
       })
-      .then().get(0).then(result => ({ name: range.date, total: result.count }))
+      .groupBy('platform')
+      .then(results => {
+        return results.reduce(function(acc, curr) {
+          acc.total += curr.count
+          acc[curr.platform] = curr.count
+          return acc
+        }, { total: 0, name: range.date })
+      })
     })
   })
 }
 
-function generate(dbFile) {
-  getTotalUsers(dbFile)
-  .then((result) => {
-    console.log(result)
+function getDailyGender(dbFile) {
+  const ranges = getLastDaysRange()
+  return db.getOrCreate(dbFile)
+  .then((knex) => {
+    return Promise.mapSeries(ranges, (range) => {
+      return knex.select(knex.raw('count(*) as count, gender')).from(function() {
+        return this.from('interactions')
+        .join('users', 'users.id', 'interactions.user')
+        .where('ts', '<', range.end)
+        .andWhere('ts', '>', range.start)
+        .andWhere('direction', '=', 'in')
+        .groupBy('user')
+        .select('users.gender')
+      })
+      .groupBy('gender')
+      .then(results => {
+        return results.reduce(function(acc, curr) {
+          acc.total += curr.count
+          acc[curr.gender] = curr.count
+          return acc
+        }, { total: 0, name: range.date })
+      })
+    })
+  })
+}
+
+function getInteractionRanges(dbFile) {
+  const ranges = getLastDaysRange()
+  return db.getOrCreate(dbFile)
+  .then((knex) => {
+    return Promise.mapSeries(ranges, (range) => {
+
+      const inner = knex.from('interactions')
+        .where('ts', '<', range.end)
+        .andWhere('ts', '>', range.start)
+        .andWhere('direction', '=', 'in')
+        .groupBy('user')
+        .select(knex.raw('count(*) as c')).toString()
+
+      return knex.raw(`select
+        sum(r1) as s1,
+        sum(r2) as s2,
+        sum(r3) as s3,
+        sum(r4) as s4,
+        sum(r5) as s5,
+        sum(r6) as s6,
+        sum(r7) as s7,
+        sum(r8) as s8
+      from (select 
+        (select count(*) where c between 0 and 2) as r1,
+        (select count(*) where c between 2 and 4) as r2,
+        (select count(*) where c between 4 and 6) as r3,
+        (select count(*) where c between 6 and 10) as r4,
+        (select count(*) where c between 10 and 15) as r5,
+        (select count(*) where c between 15 and 30) as r6,
+        (select count(*) where c between 30 and 50) as r7,
+        (select count(*) where c > 50) as r8
+          from (` + inner + `))`)
+      .then().get(0)
+    })
+  })
+  .then((results) => {
+    return results.reduce(function(acc, curr) {
+      return _.mapValues(acc, (a, k) => {
+        return a + (curr[k] || 0)
+      })
+    }, { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, s6: 0, s7: 0, s8: 0 })
+  })
+  .then(results => {
+    return [
+      { name: '[0-2]', count: results.s1 },
+      { name: '[2-4]', count: results.s2 },
+      { name: '[4-6]', count: results.s3 },
+      { name: '[6-10]', count: results.s4 },
+      { name: '[10-15]', count: results.s5 },
+      { name: '[15-30]', count: results.s6 },
+      { name: '[30-50]', count: results.s7 },
+      { name: '50+', count: results.s8 }
+    ]
   })
 }
 
 module.exports = {
   getTotalUsers: getTotalUsers,
-  getDailyActiveUsers: getDailyActiveUsers
+  getDailyActiveUsers: getDailyActiveUsers,
+  getDailyGender: getDailyGender,
+  getInteractionRanges: getInteractionRanges
 }
