@@ -45,19 +45,10 @@ class Analytics extends EventEmitter {
       })
       .then(() => stats.usersRetention(this.dbFile))
       .then(data => this.savePartialData('retentionHeatMap', data))
+      .then(() => stats.getBusyHours(this.dbFile))
+      .then(data => this.savePartialData('busyHoursHeatMap', data))
     }, 5000)
     // }, 30 * 1000 * 60) // every 30min
-
-    this.fictiveBusyHour = {
-      'Oct 31': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
-      'Oct 30': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
-      'Oct 29': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
-      'Oct 28': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
-      'Oct 27': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
-      'Oct 26': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
-      'Oct 25': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
-      'Oct 24': [1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 1.0, 0.9, 0.8, 0.7, 0.4, 0.3, 0.1, 0.4, 0.3, 0.1],
-    }
   }
 
   getData() {
@@ -71,7 +62,7 @@ class Analytics extends EventEmitter {
   }
 
   beta() {
-    stats.usersRetention(this.dbFile)
+    stats.getBusyHours(this.dbFile)
   }
 
   getChartsGraphData() {
@@ -84,7 +75,7 @@ class Analytics extends EventEmitter {
       typicalConversationLengthInADay: chartsData.interactionsRange,
       specificMetricsForLastDays: chartsData.fictiveSpecificMetrics,
       retentionHeatMap: chartsData.retentionHeatMap,
-      busyHoursHeatMap: this.fictiveBusyHour
+      busyHoursHeatMap: chartsData.busyHoursHeatMap
     }
   }
 }

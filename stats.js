@@ -56,8 +56,8 @@ function getTotalUsers(dbFile) {
   })
 }
 
-function getLastDaysRange() {
-  const nbOfDays = 14
+function getLastDaysRange(nb) {
+  const nbOfDays = nb || 14
 
   let ranges = _.times(nbOfDays, Number)
   return ranges.map((n) => {
@@ -65,7 +65,8 @@ function getLastDaysRange() {
     return {
       date: date.format('MMM Do'),
       start: date.startOf('day').format('x'), 
-      end: date.endOf('day').format('x')
+      end: date.endOf('day').format('x'),
+      day: date.format('l')
     }
   })
 }
@@ -294,6 +295,36 @@ function usersRetention(dbFile) {
   .then(() => result)
 }
 
+function getBusyHours(dbFile) {
+  const ranges = getLastDaysRange(7)
+  const result = {}
+
+  return db.getOrCreate(dbFile)
+  .then((knex) => {
+    return Promise.mapSeries(ranges, (range) => {
+
+      // select count(*) as count, ts from interactions
+      // group by strftime('%H', ts/1000, 'unixepoch')
+      return knex('interactions')
+      .whereBetween('ts', [ range.start, range.end ])
+      .select(knex.raw('count(*) as count, ts'))
+      .groupBy(knex.raw("strftime('%H', ts/1000, 'unixepoch')"))
+      .then(rows => {
+        const row = []
+        _.times(24, () => row.push(0))
+        const biggest = rows.reduce((acc, curr) => {
+          return acc = curr.count > acc ? curr.count : acc
+        }, 0)
+        rows.map(x => {
+          row[moment(x.ts).format('H')] = Number((x.count/biggest).toFixed(2)) - 0.1
+        })
+
+        result[range.date] = row
+      })
+    })
+  })
+  .then(() => result)
+}
 
 
 module.exports = {
@@ -303,5 +334,6 @@ module.exports = {
   getInteractionRanges: getInteractionRanges,
   getAverageInteractions: getAverageInteractions,
   getNumberOfUsers: getNumberOfUsers,
-  usersRetention: usersRetention
+  usersRetention: usersRetention,
+  getBusyHours: getBusyHours
 }
