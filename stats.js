@@ -36,22 +36,35 @@ function rangeDates(dbFile) {
 }
 
 function getTotalUsers(dbFile) {
-  // {name: 'Dec', facebook: 400, slack: 2400, kik: 2400, total: 5200}
   return rangeDates(dbFile)
-  .then((dates) => {
+  .then(dates => {
     return db.getOrCreate(dbFile)
-    .then((knex) => {
-      return Promise.mapSeries(dates.ranges, (date) => {
-        return knex('users').where('created_on', '<', date)
-        .groupBy('platform').select(knex.raw('platform, count(*) as count'))
-        .then((result) => {
-          return result.reduce(function(acc, curr) {
-            acc.total += curr.count
-            acc[curr.platform] = curr.count
-            return acc
-          }, { total: 0, name: dates.format(date) })
+    .then(knex => {
+      return knex('users')
+      .select(knex.raw('count(*) as count, created_on as date, platform'))
+      .groupBy(knex.raw("date(created_on/1000, 'unixepoch'), platform"))
+      .orderBy('created_on')
+      .then(rows => {
+        let total = 0
+        let totalPlatform = {}
+        const result = {}
+        rows.map((row) => {
+          const date = dates.format(row.date)
+          if(!result[date]) {
+            result[date] = { total: 0 }
+          }
+          if(!totalPlatform[row.platform]) {
+            totalPlatform[row.platform] = 0
+          }
+          totalPlatform[row.platform] += row.count
+          result[date].total = total += row.count
+          result[date][row.platform] = totalPlatform[row.platform]
         })
-      })
+        return _.toPairs(result).map(([k, v]) => {
+          v.name = k
+          return v
+        })
+      })  
     })
   })
 }
@@ -316,7 +329,7 @@ function getBusyHours(dbFile) {
           return acc = curr.count > acc ? curr.count : acc
         }, 0)
         rows.map(x => {
-          row[moment(x.ts).format('H')] = Number((x.count/biggest).toFixed(2)) - 0.1
+          row[moment(x.ts).format('H')] = Math.min(Number((x.count/biggest).toFixed(2)), 0.75)
         })
 
         result[range.date] = row

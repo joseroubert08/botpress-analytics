@@ -109,7 +109,9 @@ export default class AnalyticsModule extends React.Component {
   }
 
   renderStackedLineChartForTotalUsers() {
-    const data = this.state.totalUsersChartData;
+    const data = this.state.totalUsersChartData.map(o => _.omit(o, 'total'))
+    const sortedByKeys = _.sortBy(data, o => _.keys(o).length)
+    const legend = sortedByKeys[sortedByKeys.length - 1]
 
     const StackedAreaChart = React.createClass( {
       render () {
